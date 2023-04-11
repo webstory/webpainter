@@ -1,0 +1,9 @@
+{
+  "grammarly.selectors": [
+    {
+      "language": "gitignore",
+      "scheme": "file",
+      "pattern": ".gitignore"
+    }
+  ]
+}
