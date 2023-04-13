@@ -15,7 +15,7 @@ Some features may discard/abandon for some reasons.
   - [ ] Layer modes like multiply, overlay etc.
   - [ ] Auto-fit container
 - Advanced Canvas controls
-  - [ ] Pan and Zoom
+  - [x] Pan and Zoom
   - [ ] Rotate
 - [ ] Offline mode (IndexedDB)
 - [ ] Animation frame
