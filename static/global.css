@@ -12,3 +12,7 @@ html, body {
   min-height: 100dvh;
   overflow: auto;
 }
+
+.debug.border-red {
+  border: 1px solid red;
+}

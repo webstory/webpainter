@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Layer } from '@components/Layer';
+  import DropZoneLayer from '@components/Layer/DropZoneLayer.svelte';
 
   import { cssStringify } from '@utils';
 
@@ -7,7 +8,7 @@
   const testImg = 'https://images.mirma.cc/4430563_Fuf_egguhuntib.png';
 
   let layerProps = { width: 0, height: 0 };
-  const onLayerDimChanged = (event) => {
+  const onCanvasViewportDimChanged = (event) => {
     layerProps = event.detail;
   };
 
@@ -19,29 +20,43 @@
       type: 'canvas',
       content: [],
       text: '1',
+      execCommand: () => {},
     },
     {
       type: 'div',
       content: `<h1>Hello World</h1>`,
       text: '2',
       style: { width: 1024, height: 768 },
+      execCommand: () => {},
     },
     {
       type: 'div',
       content: `<h1>Hi my name is</h1>`,
       text: '3',
+      execCommand: (event) => {
+        console.log('Div#3');
+        console.log(event.detail);
+      },
     },
     {
       type: 'div',
       content: `<h1>Oops</h1>`,
       text: '4',
+      execCommand: () => {},
     },
   ];
+
+  const onCanvasEventBroadcast = (event) => {
+    console.log(event);
+    items.forEach((item) => {
+      item.execCommand(event);
+    });
+  };
 </script>
 
 <h1>Layers!!</h1>
 <div class="layer-container">
-  <Layer on:dimChanged={onLayerDimChanged} bind:width={layerWidth} bind:height={layerHeight}>
+  <Layer on:viewportDimChanged={onCanvasViewportDimChanged} on:broadcast={onCanvasEventBroadcast} bind:width={layerWidth} bind:height={layerHeight}>
     <div class="layer">
       <picture>
         <source srcset={testImg} />
@@ -59,6 +74,7 @@
         passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
       </p>
     </div>
+    <DropZoneLayer slot="fixed" />
   </Layer>
 </div>
 

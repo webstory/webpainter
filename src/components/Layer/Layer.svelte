@@ -28,8 +28,47 @@
   $: if (oldWidth !== width || oldHeight !== height) {
     oldWidth = width;
     oldHeight = height;
-    dispatch('dimChanged', { width, height });
+    dispatch('viewportDimChanged', { width, height });
   }
+
+  type BroadcastEvent = MouseEvent | KeyboardEvent;
+
+  const dispatchBroadcast = createEventDispatcher<BroadcastEvent>();
+
+  const broadcast = (eventName: string, event: BroadcastEvent) => {
+    console.log('Broadcasting event: ', eventName, event);
+    const eventWrapper = { detail: event.detail, type: eventName };
+    if (/^mouse/.test(eventName)) {
+      eventWrapper.detail = {
+        ...event.detail,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        offsetX: event.offsetX,
+        offsetY: event.offsetY,
+        pageX: event.pageX,
+        pageY: event.pageY,
+        screenX: event.screenX,
+        screenY: event.screenY,
+      };
+    } else if (/^key/.test(eventName)) {
+      eventWrapper.detail = {
+        ...event.detail,
+        key: event.key,
+        code: event.code,
+        location: event.location,
+        ctrlKey: event.ctrlKey,
+        shiftKey: event.shiftKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+        repeat: event.repeat,
+        isComposing: event.isComposing,
+        charCode: event.charCode,
+        keyCode: event.keyCode,
+        which: event.which,
+      };
+    }
+    dispatchBroadcast('broadcast', eventWrapper);
+  };
 
   interface MouseState {
     mouseEntered: boolean;
@@ -121,6 +160,8 @@
       mouseState.cursor = 'grabbing';
       mouseState.anchor = [...mouseState.current];
     }
+
+    broadcast('mousedown', event);
   };
 
   const handleMouseUp = (event) => {
@@ -163,8 +204,9 @@
   on:wheel={handleMouseWheel}
   style={`cursor:${mouseState.cursor}`}
 >
+  <!-- Image viewport controller container -->
   <div
-    class="panAndZoom"
+    class="viewport"
     style={`
     transform:${containerTransform};
     scale:${containerState.scale};
@@ -173,6 +215,8 @@
   >
     <slot props={propsInner} />
   </div>
+  <!-- Fixed container -->
+  <slot name="fixed" props={propsInner} />
 </div>
 
 <style lang="scss">
@@ -186,7 +230,7 @@
     contain: strict;
   }
 
-  .panAndZoom {
+  .viewport {
     position: relative;
     width: 100%;
     height: 100%;
