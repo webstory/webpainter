@@ -1,6 +1,12 @@
 <h1>Layers!!</h1>
-<div class="layer">
+<div class="layer-container">
 <Layer on:dimChanged={onLayerDimChanged} bind:width={layerWidth} bind:height={layerHeight}>
+  <div class="layer">
+    <picture>
+      <source srcset={testImg}/>
+      <img src="https://images.mirma.cc/4430563_Fuf_egguhuntib.png" alt="picture"/>
+    </picture>
+  </div>
   {#each items as layer, index}
     <div class="layer" style={cssStringify(layer.style)}>{@html layer.content}</div>
   {/each}
@@ -15,16 +21,13 @@
 <p>height: {layerHeight}</p>
 </div>
 
-<FancyList {items} let:prop2={thing}>
-  <div>{thing.text}+1</div>
-  <div>{thing.text}+2</div>
-</FancyList>
-
 <script lang="ts">
 import { Layer } from "@components/Layer";
-import FancyList from "@components/FancyList.svelte";
 
 import { cssStringify } from '@utils';
+
+// import testImg from '$lib/images/4430563_Fuf_egguhuntib.png';
+const testImg = "https://images.mirma.cc/4430563_Fuf_egguhuntib.png";
 
 let layerProps = {width: 0, height: 0};
 const onLayerDimChanged = (event) => {
@@ -59,16 +62,21 @@ const items = [
 
 ];
 
-console.log(cssStringify({width: 1024, height: 768}));
-
 </script>
 
 <style lang="scss">
-.layer {
+.layer-container {
   width: 100%;
   height: 600px;
-  min-height: 500px;
   border: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.layer {
+  border: 1px dashed black;
   // resize: both;
   // overflow: auto;
   // padding: 10px;

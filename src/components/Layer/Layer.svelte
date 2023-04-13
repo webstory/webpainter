@@ -100,7 +100,7 @@ const handleMouseMove = (event) => {
   mouseState.delta = [clientX - mouseState.anchor[0], clientY - mouseState.anchor[1]];
 
   // log mouseState
-  console.log(JSON.stringify(mouseState));
+  // console.log(JSON.stringify(mouseState));
   if(mouseState.panning === true) {
     containerTransform = `translate3d(${containerState.pan[0] + mouseState.delta[0]}px, ${containerState.pan[1] + mouseState.delta[1]}px, 0)`;
   }
@@ -119,9 +119,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
         if(mouseState.mode === 'pan') return;
         mouseState.mode = 'pan';
         mouseState.cursor = 'grab';
-        mouseState.anchor = [...mouseState.current];
-
-        // console.log('panStart');
         break;
     }
   }
@@ -133,11 +130,6 @@ const handleKeyUp = (event: KeyboardEvent) => {
       mouseState.mode = 'default';
       mouseState.cursor = 'default';
       mouseState.panning = false;
-      containerState.pan = [
-        containerState.pan[0] + mouseState.delta[0],
-        containerState.pan[1] + mouseState.delta[1],
-      ];
-      // console.log('panEnd');
       break;
   }
 };
@@ -148,6 +140,7 @@ const handleMouseDown = (event) => {
     // Left click
     mouseState.panning = true;
     mouseState.cursor = 'grabbing';
+    mouseState.anchor = [...mouseState.current];
   }
 }
 
@@ -157,6 +150,10 @@ const handleMouseUp = (event) => {
     // Left click
     mouseState.panning = false;
     mouseState.cursor = 'grab';
+    containerState.pan = [
+      containerState.pan[0] + mouseState.delta[0],
+      containerState.pan[1] + mouseState.delta[1],
+    ];
   }
 }
 </script>
@@ -176,8 +173,6 @@ const handleMouseUp = (event) => {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  contain: strict;
 }
 
 .container :global(.layer) {
@@ -189,11 +184,12 @@ const handleMouseUp = (event) => {
   }
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
   box-sizing: border-box;
   resize: none;
-  overflow: hidden;
-  contain: strict;
+  overflow: visible;
+
+  width: 100%;
+  height: 100%;
 }
+
 </style>
