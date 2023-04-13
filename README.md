@@ -1,38 +1,58 @@
-# create-svelte
+# Webpainter
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+Webpainter is layer-supported web-based painting application and web component.
 
-## Creating a project
+Written by [SvelteKit](https://kit.svelte.dev/), powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Features
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+Imeplemented feature is checked.
 
-# create a new project in my-app
-npm create svelte@latest my-app
+Some features may discard/abandon for some reasons.
+
+- Layer-supported HTML5 Canvas
+  - [ ] Layer visibility control
+  - [ ] Layer modes like multiply, overlay etc.
+  - [ ] Auto-fit container
+- Advanced Canvas controls
+  - [ ] Pan and Zoom
+  - [ ] Rotate
+- [ ] Offline mode (IndexedDB)
+- [ ] Animation frame
+  - [ ] Youtube video embedding
+  - [ ] Youtube frame sync
+- [ ] SVG layer
+  - [ ] Webfont support
+  - [ ] Dialog baloons helper
+  - [ ] Close Caption helper for animation
+- [ ] Pen pressure support
+- [ ] Custom brush
+- [ ] Web worker / wasm for hardware accelation
+- WebSocket for collabolation
+  - [ ] Multiple cursors
+  - [ ] Chat overlay
+  - [ ] Webhooks (plugin)
+- Export
+  - [ ] Export as png
+  - [ ] Export as jpg
+  - [ ] Export as webp
+  - [ ] Export as psd (Photoshop)
+  - [ ] Export as kra (Krita)
+- Import
+  - [ ] Import as layer by Drag and Drop
+  - [ ] Import psd (Photoshop)
+  - [ ] Import kra (Krita)
+- Watermarks
+  - [ ] Watermark overlay helper
+  - [ ] Censorship layer for NSFW with export warning
+  - [ ] EXIF embed (png, jpg)
+  - [ ] Invisible forensic watermark
+
+## Install and build
+
+After clone this repository, run this code below:
+
+```sh
+yarn install
+yarn build
 ```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
