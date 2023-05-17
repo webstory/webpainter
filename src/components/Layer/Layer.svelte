@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 
   export let width = 0;
   export let height = 0;
@@ -7,6 +7,16 @@
   export let keyBindings = {
     pan: ' ',
   };
+
+  let previousTouchAction;
+  onMount(() => {
+    previousTouchAction = document.body.style.touchAction;
+    document.body.style.touchAction = 'none';
+  });
+
+  onDestroy(() => {
+    document.body.style.touchAction = previousTouchAction;
+  });
 
   type KeyBindings = typeof keyBindings;
 
@@ -31,7 +41,7 @@
     dispatch('viewportDimChanged', { width, height });
   }
 
-  type BroadcastEvent = MouseEvent | KeyboardEvent;
+  type BroadcastEvent = MouseEvent | KeyboardEvent | PointerEvent;
 
   const dispatchBroadcast = createEventDispatcher<BroadcastEvent>();
 
@@ -66,12 +76,28 @@
         keyCode: event.keyCode,
         which: event.which,
       };
+    } else if (/^pointer/.test(eventName)) {
+      eventWrapper.detail = {
+        ...event.detail,
+        pointerId: event.pointerId,
+        pointerType: event.pointerType,
+        pressure: event.pressure,
+        tangentialPressure: event.tangentialPressure,
+        tiltX: event.tiltX,
+        tiltY: event.tiltY,
+        twist: event.twist,
+        width: event.width,
+        height: event.height,
+        pointerId: event.pointerId,
+        pointerType: event.pointerType,
+        isPrimary: event.isPrimary,
+      };
     }
     dispatchBroadcast('broadcast', eventWrapper);
   };
 
-  interface MouseState {
-    mouseEntered: boolean;
+  interface PointerState {
+    hover: boolean;
     mode: 'default' | 'pan' | 'zoom' | 'rotate';
     cursor: 'default' | 'grab' | 'grabbing';
     panning: boolean;
@@ -80,15 +106,15 @@
     delta: [number, number];
   }
 
-  // mouseState as MouseState
-  $: mouseState = {
+  // pointerState as PointerState
+  $: pointerState = {
     // Current state
-    mouseEntered: false,
+    hover: false,
     mode: 'default',
     cursor: 'default',
     panning: false,
 
-    // Mouse position
+    // Cursor position
     current: [0, 0],
     anchor: [0, 0],
     delta: [0, 0],
@@ -101,31 +127,31 @@
 
   let containerTransform = '';
 
-  const handleMouseEnter = () => {
-    mouseState.mouseEntered = true;
+  const handlePointerEnter = () => {
+    pointerState.hover = true;
   };
 
-  const handleMouseLeave = () => {
-    mouseState.mouseEntered = false;
+  const handlePointerLeave = () => {
+    pointerState.hover = false;
   };
 
-  const handleMouseMove = (event) => {
-    // Get current mouse position
+  const handlePointerMove = (event) => {
+    // Get current cursor position
     const { clientX, clientY } = event;
-    mouseState.current = [clientX, clientY];
-    mouseState.delta = [clientX - mouseState.anchor[0], clientY - mouseState.anchor[1]];
+    pointerState.current = [clientX, clientY];
+    pointerState.delta = [clientX - pointerState.anchor[0], clientY - pointerState.anchor[1]];
 
-    // log mouseState
-    // console.log(JSON.stringify(mouseState));
-    if (mouseState.panning === true) {
+    // log pointerState
+    // console.log(JSON.stringify(pointerState));
+    if (pointerState.panning === true) {
       // Adjust panning distance by container scale factor
-      const pan = [containerState.pan[0] + mouseState.delta[0] / containerState.scale, containerState.pan[1] + mouseState.delta[1] / containerState.scale];
+      const pan = [containerState.pan[0] + pointerState.delta[0] / containerState.scale, containerState.pan[1] + pointerState.delta[1] / containerState.scale];
       containerTransform = `translate3d(${pan[0]}px, ${pan[1]}px, 0)`;
     }
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (mouseState.mouseEntered === false) return;
+    if (pointerState.hover === false) return;
     if (event.key) {
       event.preventDefault();
       event.stopPropagation();
@@ -134,9 +160,9 @@
 
       switch (event.key as KeyBindings) {
         case keyBindings.pan:
-          if (mouseState.mode === 'pan') return;
-          mouseState.mode = 'pan';
-          mouseState.cursor = 'grab';
+          if (pointerState.mode === 'pan') return;
+          pointerState.mode = 'pan';
+          pointerState.cursor = 'grab';
           break;
       }
     }
@@ -145,39 +171,74 @@
   const handleKeyUp = (event: KeyboardEvent) => {
     switch (event.key as KeyBindings) {
       case keyBindings.pan:
-        mouseState.mode = 'default';
-        mouseState.cursor = 'default';
-        mouseState.panning = false;
+        pointerState.mode = 'default';
+        pointerState.cursor = 'default';
+        pointerState.panning = false;
         break;
     }
   };
 
-  const handleMouseDown = (event) => {
-    const button = event.button;
-    if (button === 0 && mouseState.mode === 'pan') {
-      // Left click
-      mouseState.panning = true;
-      mouseState.cursor = 'grabbing';
-      mouseState.anchor = [...mouseState.current];
+  const handlePointerDown = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const { pointerType } = event;
+    if (pointerType === 'mouse') {
+      // Mouse
+      const button = event.button;
+      if (button === 0 && pointerState.mode === 'pan' && pointerState.hover === true) {
+        // Left click
+        pointerState.panning = true;
+        pointerState.cursor = 'grabbing';
+        pointerState.anchor = [...pointerState.current];
+      }
+    } else if (pointerType === 'touch') {
+      // Touch
+    } else if (pointerType === 'pen') {
+      // Pen
+      if (event.buttons === 1 && pointerState.mode === 'pan' && pointerState.hover === true) {
+        pointerState.panning = true;
+        pointerState.cursor = 'grabbing';
+        pointerState.anchor = [...pointerState.current];
+      }
     }
-
-    broadcast('mousedown', event);
   };
 
-  const handleMouseUp = (event) => {
-    const button = event.button;
-    if (button === 0 && mouseState.mode === 'pan') {
-      // Left click
-      mouseState.panning = false;
-      mouseState.cursor = 'grab';
-      const pan = [containerState.pan[0] + mouseState.delta[0] / containerState.scale, containerState.pan[1] + mouseState.delta[1] / containerState.scale];
+  const handlePointerUp = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const { pointerType } = event;
+    if (pointerType === 'mouse') {
+      // Mouse
+      const button = event.button;
+      if (button === 0 && pointerState.mode === 'pan' && pointerState.panning === true) {
+        pointerState.panning = false;
+        pointerState.cursor = 'grab';
+        const pan = [
+          containerState.pan[0] + pointerState.delta[0] / containerState.scale,
+          containerState.pan[1] + pointerState.delta[1] / containerState.scale,
+        ];
 
-      containerState.pan = pan;
+        containerState.pan = pan;
+      }
+    } else if (pointerType === 'touch') {
+      // Touch
+    } else if (pointerType === 'pen') {
+      // Pen
+      if (event.buttons === 0 && pointerState.mode === 'pan' && pointerState.panning === true) {
+        pointerState.panning = false;
+        pointerState.cursor = 'grab';
+        const pan = [
+          containerState.pan[0] + pointerState.delta[0] / containerState.scale,
+          containerState.pan[1] + pointerState.delta[1] / containerState.scale,
+        ];
+
+        containerState.pan = pan;
+      }
     }
   };
 
   const handleMouseWheel = (event) => {
-    if (mouseState.mouseEntered === false) return;
+    if (pointerState.hover === false) return;
     event.preventDefault();
     event.stopPropagation();
     const { deltaY } = event;
@@ -193,25 +254,29 @@
   };
 </script>
 
-<svelte:body on:keydown={handleKeyDown} on:keyup={handleKeyUp} on:mousemove={handleMouseMove} on:mousedown={handleMouseDown} on:mouseup={handleMouseUp} />
+<svelte:body
+  on:keydown={handleKeyDown}
+  on:keyup={handleKeyUp}
+  on:pointermove={handlePointerMove}
+  on:pointerdown={handlePointerDown}
+  on:pointerup={handlePointerUp}
+/>
 
 <div
   class="container"
   bind:clientWidth={width}
   bind:clientHeight={height}
-  on:mouseenter={handleMouseEnter}
-  on:mouseleave={handleMouseLeave}
+  on:pointerover={handlePointerEnter}
+  on:pointerout={handlePointerLeave}
   on:wheel={handleMouseWheel}
-  style={`cursor:${mouseState.cursor}`}
+  style:cursor={pointerState.cursor}
 >
   <!-- Image viewport controller container -->
   <div
     class="viewport"
-    style={`
-    transform:${containerTransform};
-    scale:${containerState.scale};
-    pointer-events:${mouseState.mode === 'default' ? 'all' : 'none'}
-  `}
+    style:transform={containerTransform}
+    style:scale={containerState.scale}
+    style:pointer-events={pointerState.mode === 'default' ? 'all' : 'none'}
   >
     <slot props={propsInner} />
   </div>
@@ -228,15 +293,19 @@
 
     overflow: hidden;
     contain: strict;
+
+    touch-action: none;
   }
 
   .viewport {
     position: relative;
     width: 100%;
     height: 100%;
+
+    transition: scale 0.2s ease-out;
   }
 
-  .container :global(.layer) {
+  .container :global(.wp-layer) {
     &:first-child {
       position: relative;
     }

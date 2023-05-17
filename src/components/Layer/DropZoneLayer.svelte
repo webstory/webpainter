@@ -1,11 +1,32 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'ico', 'webp', 'avif'];
+
   let canvas: HTMLCanvasElement;
   $: width = 1;
   $: height = 1;
 
   onMount(() => {});
+
+  /* Image loader for CORS workaround */
+  let img: HTMLImageElement;
+  const handleImgLoaded = (event) => {
+    const ctx = canvas.getContext('2d');
+    width = img.width;
+    height = img.height;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0);
+    // Clear img.src for the next drop
+    img.src = '';
+  };
+
+  // Explain to user why the image is not loaded
+  const handleImgLoadError = (event) => {
+    console.error('Failed to load image', event);
+  };
 
   const handleDragEnter = (event) => {
     event.preventDefault();
@@ -38,17 +59,6 @@
       const { name, lastModified, size, type } = file;
       console.log('file', name, lastModified, size, type);
 
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = () => {
-        width = img.width;
-        height = img.height;
-        canvas.width = width;
-        canvas.height = height;
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0);
-      };
-
       // read file content as base64
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -56,6 +66,18 @@
         img.src = base64;
       };
       reader.readAsDataURL(file);
+    }
+
+    // If it is a url, then fetch the url and draw it on the canvas
+    const urls = event.dataTransfer.getData('text/uri-list');
+    const url = urls instanceof Array ? urls[0] : urls;
+    if (url) {
+      const filename = new URL(url).pathname.split('/').pop();
+      // Guess this url is an image by checking the extension
+      const ext = filename.split('.').pop();
+      if (imageExtensions.includes(ext)) {
+        img.src = url;
+      }
     }
   };
 
@@ -67,7 +89,7 @@
 </script>
 
 <div
-  class="layer"
+  class={$$restProps.class ?? ''}
   {width}
   {height}
   on:dragenter={handleDragEnter}
@@ -78,4 +100,13 @@
 >
   <slot />
   <canvas class="debug border-red" bind:this={canvas} />
+  <img class="hidden" bind:this={img} on:load={handleImgLoaded} on:error={handleImgLoadError} />
 </div>
+
+<style>
+  .hidden {
+    visibility: hidden;
+    position: absolute;
+    pointer-events: none;
+  }
+</style>

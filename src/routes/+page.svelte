@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { Layer } from '@components/Layer';
   import DropZoneLayer from '@components/Layer/DropZoneLayer.svelte';
+  import CanvasLayer from '@components/Layer/CanvasLayer.svelte';
 
   import { cssStringify } from '@utils';
 
@@ -15,7 +17,7 @@
   let layerWidth = 0;
   let layerHeight = 0;
 
-  const items = [
+  $: items = [
     {
       type: 'canvas',
       content: [],
@@ -52,21 +54,46 @@
       item.execCommand(event);
     });
   };
+
+  const onAddNewLayer = (event) => {
+    const { detail } = event.detail;
+    const payload = detail?.payload;
+
+    console.log(event);
+    items.push({
+      type: 'div',
+      content: `<h1>Hi my name is</h1>`,
+      text: '3',
+      execCommand: (event) => {},
+    });
+  };
+
+  let drawFromURL;
+  onMount(() => {
+    drawFromURL(testImg);
+  });
 </script>
 
 <h1>Layers!!</h1>
 <div class="layer-container">
-  <Layer on:viewportDimChanged={onCanvasViewportDimChanged} on:broadcast={onCanvasEventBroadcast} bind:width={layerWidth} bind:height={layerHeight}>
+  <Layer
+    on:viewportDimChanged={onCanvasViewportDimChanged}
+    on:broadcast={onCanvasEventBroadcast}
+    on:addNewLayer={onAddNewLayer}
+    bind:width={layerWidth}
+    bind:height={layerHeight}
+  >
     <div class="layer">
-      <picture>
+      <!-- <picture>
         <source srcset={testImg} />
         <img src="https://images.mirma.cc/4430563_Fuf_egguhuntib.png" alt="picture" />
-      </picture>
+      </picture> -->
+      <CanvasLayer bind:drawFromURL />
     </div>
     {#each items as layer, index}
-      <div class="layer" style={cssStringify(layer.style)}>{@html layer.content}</div>
+      <div class="wp-layer" style={cssStringify(layer.style)}>{@html layer.content}</div>
     {/each}
-    <div class="layer">
+    <div class="wp-layer">
       <p>
         Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
         when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap
@@ -74,7 +101,7 @@
         passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
       </p>
     </div>
-    <DropZoneLayer slot="fixed" />
+    <DropZoneLayer class="wp-layer" slot="fixed" />
   </Layer>
 </div>
 
